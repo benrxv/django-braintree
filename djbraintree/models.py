@@ -5,7 +5,7 @@ import traceback
 
 from .auth import braintree
 from .managers import CustomerManager
-from .tasks import send_funds
+# from .tasks import send_funds
 from model_utils.models import TimeStampedModel
 from delorean import Delorean
 from jsonfield.fields import JSONField
@@ -103,6 +103,19 @@ class Customer(BraintreeObject):
     #                            pin, notes=notes, funds_source=funds_source)
     #     return True
 
+    def get_paypal_token(self):
+        cus = braintree.Customer.find(self.braintree_id)
+        return cus.paypal_accounts[0].token
+
+    def charge_paypal(self, amount):
+        """ amount is a string representation of the dollar amount """
+        token = self.get_paypal_token()
+        result = braintree.Transaction.sale({"amount": amount, "payment_method_token": token})
+        if result.is_success:
+            return True
+        else:
+            return result.message
+        
 
 class CurrentSubscription(TimeStampedModel):
 
@@ -170,10 +183,11 @@ class CurrentSubscription(TimeStampedModel):
         token = self.customer.get_token()
         cus = self.customer
         metadata = {'recur': 'recur'}
-        send_funds.delay(token, DWOLLA_ACCOUNT['user_id'],
-                         float(self.amount), cus.pin,
-                         "Devote.io monthly subscription",
-                         metadata=metadata)
+        # Need to do something here...
+        # send_funds.delay(token, DWOLLA_ACCOUNT['user_id'],
+        #                  float(self.amount), cus.pin,
+        #                  "Devote.io monthly subscription",
+        #                  metadata=metadata)
 
     @classmethod
     def get_or_create(cls, customer, amount=0):

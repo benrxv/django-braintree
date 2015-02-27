@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.db.models.fields import FieldDoesNotExist
 
 # from .models import Event, EventProcessingException, Transfer, Charge
-from .models import CurrentSubscription, Customer, Plan, TransactionStatus  # , Invoice, InvoiceItem 
+from .models import CurrentSubscription, Customer
 
 from .settings import User
 
@@ -176,29 +176,29 @@ def send_charge_receipt(modeladmin, request, queryset):
 #     ] + user_search_fields,
 # )
 
-admin.site.register(
-    TransactionStatus,
-    readonly_fields=('created',),
-    list_display=[
-        "braintree_id",
-        "btype",
-        "subtype",
-        "value",
-        "created"
-    ],
-    list_filter=[
-        "btype",
-        "subtype",
-        "created",
-        "value",
-    ],
-    search_fields=[
-        "braintree_id",
-        "value",
-        "customer__user__username",
-        "customer__user__email",
-    ] + user_search_fields,
-)
+# admin.site.register(
+#     TransactionStatus,
+#     readonly_fields=('created',),
+#     list_display=[
+#         "braintree_id",
+#         "btype",
+#         "subtype",
+#         "value",
+#         "created"
+#     ],
+#     list_filter=[
+#         "btype",
+#         "subtype",
+#         "created",
+#         "value",
+#     ],
+#     search_fields=[
+#         "braintree_id",
+#         "value",
+#         "customer__user__username",
+#         "customer__user__email",
+#     ] + user_search_fields,
+# )
 
 
 class CurrentSubscriptionInline(admin.TabularInline):
@@ -318,29 +318,29 @@ customer_has_card.short_description = "Customer"
 # )
 
 
-class PlanAdmin(admin.ModelAdmin):
+# class PlanAdmin(admin.ModelAdmin):
 
-    # def save_model(self, request, obj, form, change):
-    #     """Update or create objects using our custom methods that
-    #     sync with Stripe."""
+#     # def save_model(self, request, obj, form, change):
+#     #     """Update or create objects using our custom methods that
+#     #     sync with Stripe."""
 
-    #     if change:
-    #         obj.update_name()
+#     #     if change:
+#     #         obj.update_name()
 
-    #     else:
-    #         Plan.get_or_create(**form.cleaned_data)
+#     #     else:
+#     #         Plan.get_or_create(**form.cleaned_data)
 
-    def get_readonly_fields(self, request, obj=None):
-        readonly_fields = list(self.readonly_fields)
-        if obj:
-            readonly_fields.extend([
-                # 'stripe_id',
-                'amount',
-                'currency',
-                'interval',
-                'interval_count',
-                'trial_period_days'])
+#     def get_readonly_fields(self, request, obj=None):
+#         readonly_fields = list(self.readonly_fields)
+#         if obj:
+#             readonly_fields.extend([
+#                 # 'stripe_id',
+#                 'amount',
+#                 'currency',
+#                 'interval',
+#                 'interval_count',
+#                 'trial_period_days'])
 
-        return readonly_fields
+#         return readonly_fields
 
-admin.site.register(Plan, PlanAdmin)
+# admin.site.register(Plan, PlanAdmin)
