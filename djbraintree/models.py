@@ -75,7 +75,7 @@ class Customer(BraintreeObject):
             return cls.create(user), True
 
     @classmethod
-    def create(cls, user):
+    def create(cls, user, token=None):
         cus = Customer.objects.create(user=user)
         return cus
 
@@ -85,38 +85,36 @@ class Customer(BraintreeObject):
         #     token = self.update_tokens()
         # return token
 
-    def update_tokens(self, admin=False):
-        return None
-        # if admin is False:
-        #     resp = DWOLLA_APP.refresh_auth(self.refresh_token)
-        # else:
-        #     resp = DWOLLA_ADMIN_APP.refresh_auth(self.refresh_token)
-        # self.refresh_token = resp['refresh_token']
-        # self.token = resp['access_token']
-        # self.save(update_fields=['token', 'refresh_token'])
-        # return self.token
-
-    # def send_funds(self, amount, notes, pin=None, funds_source=None):
-    #     pin = pin or self.pin
-    #     dwolla_user = DwollaUser(self.token)
-    #     dwolla_user.send_funds(token, amount, DWOLLA_ACCOUNT['user_id'],
-    #                            pin, notes=notes, funds_source=funds_source)
-    #     return True
+    def update_token(self, token):
+        if self.braintree_id:
+            braintree.Customer.update(self.braintree_id,
+                                      {"payment_method_nonce": token})
+        else:
+            result = braintree.Customer.create({"email": self.user.email,
+                                                "payment_method_nonce": token})
+            self.braintree_id = result.customer.id
+            self.token = token
+            self.save(update_fields=['braintree_id', 'token'])
+        return True
 
     def get_paypal_token(self):
         cus = braintree.Customer.find(self.braintree_id)
         return cus.paypal_accounts[0].token
 
-    def charge_paypal(self, amount):
+    def charge_paypal(self, amount, token=None):
         """ amount is a string representation of the dollar amount """
         token = self.get_paypal_token()
-        result = braintree.Transaction.sale({"amount": amount, "payment_method_token": token})
+        result = braintree.Transaction.sale({"amount": amount,
+                                             "payment_method_token": token,
+                                             "options": {
+                                                 "submit_for_settlement": True
+                                             }})
         if result.is_success:
-            return True
+            return result.transaction.id
         else:
             return result.message
-        
 
+        
 class CurrentSubscription(TimeStampedModel):
 
     STATUS_TRIALING = "trialing"
